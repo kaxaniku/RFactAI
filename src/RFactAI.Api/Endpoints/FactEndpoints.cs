@@ -1,4 +1,6 @@
+using System.Security.Claims;
 using RFactAI.Application.Facts;
+using RFactAI.Application.History;
 using RFactAI.Domain;
 using RFactAI.Domain.Exceptions;
 
@@ -18,7 +20,8 @@ public static class FactEndpoints
             .WithDescription(
                 $"Generates facts for a category using the local LLM. `count` is {FactLimits.MinCount}-{FactLimits.MaxCount} (default {FactLimits.DefaultCount}). " +
                 $"The `{SourceHeader}` response header is `llm` or `fallback` (curated facts used when the LLM is offline or returns invalid JSON). " +
-                "Returns 503 when the LLM is unavailable and the category has no fallback facts.")
+                "Returns 503 when the LLM is unavailable and the category has no fallback facts. " +
+                $"Authentication is optional: with a bearer token the returned facts are also saved to the user's history (newest {FactLimits.MaxHistoryPerUser} kept).")
             .Produces<FactResponse>()
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
@@ -29,7 +32,10 @@ public static class FactEndpoints
     private static async Task<IResult> GetFacts(
         string? category,
         int? count,
+        ClaimsPrincipal principal,
         IFactService facts,
+        IHistoryService history,
+        ILogger<Program> logger,
         HttpResponse response,
         CancellationToken ct)
     {
@@ -41,6 +47,20 @@ public static class FactEndpoints
         {
             var result = await facts.GetFactsAsync(category!.Trim(), count ?? FactLimits.DefaultCount, ct);
             response.Headers[SourceHeader] = result.Source.ToString().ToLowerInvariant();
+
+            // Anonymous callers are fine; authenticated callers get the facts saved to their history.
+            if (principal.GetUserId() is { } userId)
+            {
+                try
+                {
+                    await history.RecordAsync(userId, result.Response, result.Source, ct);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    logger.LogError(ex, "Could not save facts to history for user {UserId}.", userId);
+                }
+            }
+
             return Results.Ok(result.Response);
         }
         catch (LlmUnavailableException ex)
