@@ -1,9 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.AI;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using RFactAI.Application.Facts;
 using static RFactAI.Application.Tests.TestHelpers;
 
@@ -11,14 +8,7 @@ namespace RFactAI.Application.Tests;
 
 public class FactEndpointTests
 {
-    private static HttpClient CreateClient(IChatClient chat) =>
-        new WebApplicationFactory<Program>()
-            .WithWebHostBuilder(b => b.ConfigureServices(s =>
-            {
-                s.RemoveAll<IChatClient>();
-                s.AddSingleton(chat);
-            }))
-            .CreateClient();
+    private static HttpClient CreateClient(IChatClient chat) => TestApi.CreateFactory(chat).CreateClient();
 
     [Fact]
     public async Task Returns_200_with_facts_and_llm_source_header()
