@@ -1,0 +1,17 @@
+@RFactAI_HostAddress = http://localhost:5027
+
+### Happy path: 3 space facts
+GET {{RFactAI_HostAddress}}/api/facts?category=space&count=3
+Accept: application/json
+
+### Default count
+GET {{RFactAI_HostAddress}}/api/facts?category=animals
+Accept: application/json
+
+### 400: count above the maximum of 10
+GET {{RFactAI_HostAddress}}/api/facts?category=space&count=11
+Accept: application/json
+
+### 400: missing category
+GET {{RFactAI_HostAddress}}/api/facts?count=3
+Accept: application/json

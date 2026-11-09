@@ -1,0 +1,11 @@
+﻿<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/RFactAI.Api/RFactAI.Api.csproj" />
+    <Project Path="src/RFactAI.Application/RFactAI.Application.csproj" />
+    <Project Path="src/RFactAI.Domain/RFactAI.Domain.csproj" />
+    <Project Path="src/RFactAI.Infrastructure/RFactAI.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/RFactAI.Application.Tests/RFactAI.Application.Tests.csproj" />
+  </Folder>
+</Solution>
